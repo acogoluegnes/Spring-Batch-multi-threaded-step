@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd">
+
+	<import resource="classpath:/infrastructure-ctx.xml" />
+	
+	<batch:job id="multiThreadedStepExecutionJob">
+		<batch:step id="multiThreadedStepExecutionStep">
+			<batch:tasklet task-executor="executor" throttle-limit="10">
+				<batch:chunk reader="reader" processor="processor" writer="writer" commit-interval="10" />
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+
+	<task:executor id="executor" pool-size="5" />
+
+</beans>

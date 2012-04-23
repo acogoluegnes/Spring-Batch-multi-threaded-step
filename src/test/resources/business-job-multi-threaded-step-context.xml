@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd">
+
+	<import resource="classpath:/infrastructure-ctx.xml" />
+	
+	<batch:job id="multiThreadedStepExecutionJob">
+		<batch:step id="multiThreadedStepExecutionStep">
+			<batch:tasklet task-executor="executor" throttle-limit="4">
+				<batch:chunk reader="reader" writer="writer" commit-interval="10" />
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+	
+	<task:executor id="executor" pool-size="5" />
+	
+	
+	<bean id="reader" class="com.zenika.batch.SynchronizedItemReader">
+		<constructor-arg>
+			<bean class="org.springframework.batch.item.database.JdbcCursorItemReader">
+				<property name="dataSource" ref="dataSource" />
+				<property name="sql" value="select id,account_id,amount,processed from transfer_request where processed = 'f'" />
+				<property name="saveState" value="false" />
+				<property name="rowMapper">
+					<bean class="com.zenika.batch.TransferRequestRowMapper" />
+				</property>
+			</bean>		
+		</constructor-arg>
+	</bean>
+
+	<bean id="writer" class="com.zenika.batch.BusinessItemWriter">
+		<constructor-arg ref="dataSource" />
+	</bean>
+
+</beans>

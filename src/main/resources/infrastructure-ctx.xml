@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd">
+
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<batch:job-repository id="jobRepository" />
+	
+	<bean class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+	
+	<beans profile="dev">
+		<jdbc:embedded-database id="dataSource" type="H2" />
+		
+		<jdbc:initialize-database data-source="dataSource">
+			<jdbc:script location="classpath:/business-schema-drop-create.sql" />
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-drop-h2.sql" />
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-h2.sql" />
+		</jdbc:initialize-database>
+	</beans>
+	
+	<beans profile="prod">
+		<bean id="poolProperties" class="org.apache.tomcat.jdbc.pool.PoolProperties">
+	    	<property name="url" value="jdbc:postgresql://localhost:5432/spring_batch_mt_step"/>
+			<property name="driverClassName" value="org.postgresql.Driver"/>
+			<property name="validationQuery" value="select 1"/>
+			<property name="testOnBorrow" value="true"/>
+<!-- 			    <property name="jdbcInterceptors" value="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"/> -->
+		    <property name="maxActive" value="10"/>
+		    <property name="minIdle" value="1" />
+		    <property name="maxIdle" value="5" />
+		    <property name="username" value="app"/>
+		    <property name="password" value="app"/>
+		</bean>
+	
+		<bean id="dataSource" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+			<property name="poolProperties" ref="poolProperties"/>
+		</bean>	
+	
+		<jdbc:initialize-database data-source="dataSource" ignore-failures="DROPS">
+			<jdbc:script location="classpath:/business-schema-drop-create.sql" />
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-drop-postgresql.sql" />
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-postgresql.sql" />
+		</jdbc:initialize-database>
+	</beans>
+
+</beans>

@@ -6,7 +6,9 @@
 		</encoder>
 	</appender>
 	
-	<logger name="org.springframework.integration" level="WARN" />
+	<logger name="org.springframework" level="WARN" />
+	
+	<logger name="com.zenika" level="DEBUG" />
 
 	<root level="error">
 		<appender-ref ref="STDOUT" />
